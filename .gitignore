@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+# Vagrant-specific items.
+.vagrant/
+.vagrant.d/
+
 *.gem
 *.rbc
 /.config
