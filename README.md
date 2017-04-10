@@ -7,7 +7,7 @@ submitted to the [vagrant-vbguest] repo.
 
 ## Installation
 
-This plugin requires the Vagrant plugin `[vagrant-vbguest]`.
+This plugin requires the [vagrant-vbguest] Vagrant plugin.
 
 ```sh
 vagrant plugin install 'vagrant-vbguest-windows'

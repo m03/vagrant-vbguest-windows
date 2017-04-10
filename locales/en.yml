@@ -1,0 +1,8 @@
+en:
+  vagrant_vbguest_windows:
+    mounting_iso: "Mounting Virtualbox Guest Additions ISO."
+    unmounting_iso: "Unmounting Virtualbox Guest Additions ISO."
+    errors:
+      installer:
+        generic_installer: |-
+          The guest's platform ("%{distro}") is currently not supported, will try generic Windows method...
