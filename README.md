@@ -1,5 +1,5 @@
 # vagrant-vbguest-windows
-This [Vagrant] plugin extends [vagrant-vbguest], by adding a VagrantVbguest Installer for Windows clients.
+This experimental [Vagrant] plugin extends [vagrant-vbguest], by adding a VagrantVbguest Installer for Windows clients.
 
 For background information, see the comments on [this pull request](https://github.com/dotless-de/vagrant-vbguest/pull/129#issuecomment-281099298)
 submitted to the [vagrant-vbguest] repo.
