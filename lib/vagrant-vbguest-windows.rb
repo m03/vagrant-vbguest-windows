@@ -9,7 +9,7 @@ I18n.load_path << File.expand_path('../../locales/en.yml', __FILE__)
 I18n.reload!
 
 require_relative 'vagrant-vbguest-windows/version'
-require_relative 'vagrant-vbguest-windows/installer'
+require_relative 'vagrant-vbguest-windows/installers/windows'
 
 module VagrantVbguestWindows
   class Plugin < Vagrant.plugin('2')

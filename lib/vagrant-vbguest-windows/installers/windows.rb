@@ -1,8 +1,8 @@
 module VagrantVbguestWindows
-  # A basic Installer implementation for vanilla or
-  # unknown Windows based systems.
-  class Installer < ::VagrantVbguest::Installers::Base
-    VERSION_PATTERN = /^(\d+\.\d+.\d+)/
+  # A basic Installer implementation for unknown
+  # Windows based systems.
+  class Windows < ::VagrantVbguest::Installers::Base
+    VERSION_PATTERN = Regexp::new('^(\d+\.\d+.\d+)')
 
     # Matches if the operating system name prints "Windows"
     # Raises an Error if this class is beeing subclassed but
@@ -11,41 +11,43 @@ module VagrantVbguestWindows
     # a more specific distributen like 'ubuntu' or 'arch' and
     # therefore should do a more specific check.
     def self.match?(vm)
-      raise Error, :_key => :do_not_inherit_match_method if self != Installer
-      VagrantPlugins::GuestWindows::Guest.new().detect?(vm)
+      raise Error, :_key => :do_not_inherit_match_method if self != Windows
+      return VagrantPlugins::GuestWindows::Guest.new().detect?(vm)
     end
 
-    # Since we don't have `/etc/os-release` under Windows guests, replicate the structure
-    # so that os_release functions similar to the way it does under Linux.
+    # Since we don't have `/etc/os-release` under Windows guests,
+    # replicate the portion of the structure that gets used by
+    # vagrant-vbguest, so that os_release functions similar to
+    # the way it does in the Linux installer.
     # The result is cached on a per-vm basis.
     #
     # @return [Hash|nil] The os-release configuration as Hash, or `nil if file is not present or not parsable.
     def self.os_release(vm)
-      @@os_release_info ||= {}
-      if !@@os_release_info.has_key?(vm_id(vm)) && self.match?(vm)
-        osr_parsed = { 'NAME' => 'Windows', 'ID' => 'windows', 'ID_LIKE' => 'windows',
-                       'BUG_REPORT_URL' => 'https://connect.microsoft.com/',
-                       'HOME_URL' => 'https://www.microsoft.com/en-us/windows/',
-                       'SUPPORT_URL' => 'https://support.microsoft.com/en-us/contactus/',
-        }
-        cmds = { 'PRETTY_NAME' => 'Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object -ExpandProperty Caption',
-                 'VERSION_ID' => 'Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object -ExpandProperty Version'
-        }
-        cmds.each do |key, cmd|
-          osr_parsed[key] = String.new
-          begin
-            communicate.sudo(cmd, opts) do |type, data|
-              block
-              osr_parsed[key] = data.strip
-            end
-          rescue => e
-            vm.env.ui.warn(e.message)
-          end
+      @@os_release_info ||= Hash.new
+      osr = {
+        :ID          => String.new,
+        :PRETTY_NAME => String.new
+      }
+      release_pattern = Regexp::new('(?<prefix>win).*?(?<version>\d+)\s+(?<release>r\d+)?')
+      cmd = <<-SHELL
+      $Caption = Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object -ExpandProperty Caption
+      Return $Caption
+      SHELL
+      begin
+        communicate.sudo(cmd, :error_check => false) do |type, data|
+          osr[:PRETTY_NAME] = data.strip unless data.empty?
         end
-        osr_parsed['VERSION'] = osr_parsed['VERSION_ID']
-        @@os_release_info[vm_id(vm)] = osr_parsed
+      rescue => e
+        vm.env.ui.warn(e.message)
+        return nil
       end
-      @@os_release_info[vm_id(vm)]
+      matches = osr[:PRETTY_NAME].downcase.match(release_pattern)
+      if matches
+        osr[:ID] = "#{matches[:prefix]}#{matches[:version]}#{matches[:release]}"
+      end
+      osr[:VERSION_ID] = osr[:ID]
+      @@os_release_info[vm_id(vm)] = osr
+      return @@os_release_info[vm_id(vm)]
     end
 
     def os_release
@@ -87,17 +89,25 @@ module VagrantVbguestWindows
       return @mount_point
     end
 
-    # A generic way of installing GuestAdditions assuming all
-    # dependencies on the guest are installed
+    # The absolute path to the GuestAdditions installer.
+    # The iso file has to be mounted on +mount_point+.
+    def installer
+      @installer ||= File.join(mount_point, 'VBoxWindowsAdditions.exe')
+    end
+
+    # The arguments string, which gets passed to the installer executable
+    def windows_installer_arguments
+#      @windows_installer_arguments ||= Array(options[:windows_installer_arguments]).join " "
+      @windows_installer_arguments ||= '/S'
+    end
+
+    # Go through the installation process.
     #
     # @param opts [Hash] Optional options Hash which might get passed to {Vagrant::Communication::WinRM#execute} and friends
     # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def install(opts=nil, &block)
-      if self.class == Installer
-        env.ui.warn I18n.t("vagrant_vbguest_windows.errors.installer.generic_installer", distro: self.class.distro(vm))
-      end
       upload(iso_file)
       mount_iso(opts, &block)
       execute_certutil(opts, &block)
@@ -105,17 +115,47 @@ module VagrantVbguestWindows
       unmount_iso(opts, &block) unless options[:no_cleanup]
     end
 
-    # @param opts [Hash] Optional options Hash which might get passed to {Vagrant::Communication::WinRM#execute} and friends
+    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
+    # @yieldparam [String] data Data for the given outputervice
+    def rebuild(opts=nil, &block)
+      install(opts, &block)
+    end
+
+    # Mount the GuestAdditions iso file on Windows systems
+    # that have native PowerShell 4 or newer.
+    # Mounts the given uploaded file from +tmp_path+ on +mount_point+.
+    #
+    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
     # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
-    def running?(opts=nil, &block)
+    def mount_iso(opts=nil, &block)
       cmd = <<-SHELL
-      $VBoxService = Get-Service -Name VBoxService | Select-Object -First 1
-      if ("$($VBoxService.Status)".StartsWith('Run')) { Exit 0 } Exit 1
+      $CimInstance = Mount-DiskImage -ImagePath "#{tmp_path}" -PassThru
+      $DriveLetter = $CimInstance | Get-Volume | Select-Object -ExpandProperty DriveLetter
+      Write-Output "$($DriveLetter):/";
       SHELL
-      opts = {:sudo => true}.merge(opts || {})
-      communicate.test(cmd, opts, &block)
+      communicate.sudo(cmd, opts) do |type, data|
+        block
+        @mount_point = data.strip unless data.empty?
+      end
+      env.ui.info(I18n.t("vagrant_vbguest_windows.mounting_iso", :mount_point => mount_point))
+    end
+
+    # Un-mounting the GuestAdditions iso file on Windows systems
+    # that have native PowerShell 4 or newer.
+    # Unmounts the +tmp_path+.
+    #
+    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
+    # @yieldparam [String] data Data for the given output.
+    def unmount_iso(opts=nil, &block)
+      env.ui.info(I18n.t("vagrant_vbguest_windows.unmounting_iso", :mount_point => mount_point))
+      opts = {:error_check => false}.merge(opts || {})
+      communicate.sudo("Dismount-DiskImage -ImagePath \"#{tmp_path}\"", opts, &block)
     end
 
     # This overrides {VagrantVbguest::Installers::Base#guest_version}
@@ -146,14 +186,6 @@ module VagrantVbguestWindows
     # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
     # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
-    # @yieldparam [String] data Data for the given outputervice
-    def rebuild(opts=nil, &block)
-      install(opts, &block)
-    end
-
-    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
-    # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def start(opts=nil, &block)
       opts = {:error_check => false}.merge(opts || {})
@@ -164,20 +196,17 @@ module VagrantVbguestWindows
       communicate.sudo(cmd, opts, &block)
     end
 
-    # Extract the installer so we can report the installer version.
-    #
-    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
+    # @param opts [Hash] Optional options Hash which might get passed to {Vagrant::Communication::WinRM#execute} and friends
     # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
-    def extract_installer(opts=nil, &block)
-      env.ui.info("Extracting installer: #{installer}")
+    def running?(opts=nil, &block)
       cmd = <<-SHELL
-      $DestinationPath = Join-Path -Path "#{tmp_dir}" -ChildPath 'VBoxWindowsAdditions'
-      Start-Process -FilePath "#{installer}" -ArgumentList "/extract /S /D=$($DestinationPath)" -Wait
+      $VBoxService = Get-Service -Name VBoxService | Select-Object -First 1
+      if ("$($VBoxService.Status)".StartsWith('Run')) { Exit 0 } Exit 1
       SHELL
-      opts = {:error_check => false}.merge(opts || {})
-      communicate.sudo(cmd, opts, &block)
+      opts = {:sudo => true}.merge(opts || {})
+      communicate.test(cmd, opts, &block)
     end
 
     # Helper to ensure that the certificates are in place
@@ -220,57 +249,7 @@ module VagrantVbguestWindows
       end
     end
 
-    # The absolute path to the GuestAdditions installer.
-    # The iso file has to be mounted on +mount_point+.
-    def installer
-      @installer ||= File.join(mount_point, 'VBoxWindowsAdditions.exe')
-    end
-
-    # The arguments string, which gets passed to the installer executable
-    def windows_installer_arguments
-#      @windows_installer_arguments ||= Array(options[:windows_installer_arguments]).join " "
-      @windows_installer_arguments ||= '/S'
-    end
-
-    # A generic helper method for mounting the GuestAdditions iso file
-    # on Windows systems with native PowerShell 4 or newer.
-    # Mounts the given uploaded file from +tmp_path+ on +mount_point+.
-    #
-    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
-    # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
-    # @yieldparam [String] data Data for the given output.
-    def mount_iso(opts=nil, &block)
-      cmd = <<-SHELL
-      $CimInstance = Mount-DiskImage -ImagePath "#{tmp_path}" -PassThru
-      $DriveLetter = $CimInstance | Get-Volume | Select-Object -ExpandProperty DriveLetter
-      Write-Output "$($DriveLetter):/";
-      SHELL
-      communicate.sudo(cmd, opts) do |type, data|
-        block
-        @mount_point = data.strip unless data.empty?
-      end
-      env.ui.info(I18n.t("vagrant_vbguest_windows.mounting_iso", :mount_point => mount_point))
-    end
-
-    # A generic helper method for un-mounting the GuestAdditions iso file
-    # on Windows systems with native PowerShell 4 or newer.
-    # Unmounts the +tmp_path+.
-    #
-    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
-    # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
-    # @yieldparam [String] data Data for the given output.
-    def unmount_iso(opts=nil, &block)
-      env.ui.info(I18n.t("vagrant_vbguest_windows.unmounting_iso", :mount_point => mount_point))
-      begin
-        communicate.sudo("Dismount-DiskImage -ImagePath \"#{tmp_path}\"", opts, &block)
-      rescue => e
-        env.ui.warn(e.message)
-      end
-    end
-
-    # Determinates the version of the GuestAdditions installer in use
+    # Determines the version of the GuestAdditions installer in use.
     #
     # @return [String] The version code of the GuestAdditions installer
     def installer_version(path_to_installer)
@@ -286,5 +265,5 @@ module VagrantVbguestWindows
     end
   end
 end
-# Register the Installer class with VagrantVbguest.
-VagrantVbguest::Installer.register(VagrantVbguestWindows::Installer, 6)
+# Register the Windows class with VagrantVbguest.
+VagrantVbguest::Installer.register(VagrantVbguestWindows::Windows, 6)

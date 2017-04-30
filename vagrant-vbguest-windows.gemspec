@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/m03/vagrant-vbguest-windows'
   spec.license       = 'MIT'
 
-  spec.add_dependency 'i18n'
+  spec.add_dependency 'i18n', '~> 0.8.0'
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features)/})
