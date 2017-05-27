@@ -37,8 +37,8 @@ module VagrantVbguestWindows
         communicate.sudo(cmd, :error_check => false) do |type, data|
           osr[:PRETTY_NAME] = data.strip unless data.empty?
         end
-      rescue => e
-        vm.env.ui.warn(e.message)
+      rescue => error
+        vm.env.ui.warn(error.message)
         return nil
       end
       matches = osr[:PRETTY_NAME].downcase.match(release_pattern)
@@ -46,8 +46,9 @@ module VagrantVbguestWindows
         osr[:ID] = "#{matches[:prefix]}#{matches[:version]}#{matches[:release]}"
       end
       osr[:VERSION_ID] = osr[:ID]
-      @@os_release_info[vm_id(vm)] = osr
-      return @@os_release_info[vm_id(vm)]
+      identifier = vm_id(vm)
+      @@os_release_info[identifier] = osr
+      return @@os_release_info[identifier]
     end
 
     def os_release
@@ -167,7 +168,7 @@ module VagrantVbguestWindows
     #
     # @return [String] The version code of the VirtualBox Guest Additions
     #                  available on the guest, or `nil` if none installed.
-    def guest_version(reload = false)
+    def guest_version(reload=false)
       return @guest_version if @guest_version && !reload
       driver_version = super.to_s[VERSION_PATTERN, 1]
 

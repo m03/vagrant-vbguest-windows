@@ -1,0 +1,16 @@
+language: ruby
+cache: bundler
+sudo: false
+
+rvm:
+  - 2.3.3
+
+branches:
+  only:
+    - master 
+
+# Install dependencies.
+install: bundle install
+script:
+  - bundle exec rake
+  - gem build vagrant-vbguest-windows.gemspec
