@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/m03/vagrant-vbguest-windows.svg?branch=master)](https://travis-ci.org/m03/vagrant-vbguest-windows)
+
 # vagrant-vbguest-windows
 This experimental [Vagrant] plugin extends [vagrant-vbguest], by adding a VagrantVbguest Installer for Windows clients.
 

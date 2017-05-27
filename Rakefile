@@ -1,3 +1,5 @@
 require 'bundler/gem_tasks'
 
-task :default => :spec
+Dir.glob('lib/tasks/*.rake').each { |rake_task| import rake_task }
+
+task :default => [:reek]
