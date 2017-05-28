@@ -41,14 +41,12 @@ module VagrantVbguestWindows
         vm.env.ui.warn(error.message)
         return nil
       end
-      matches = osr[:PRETTY_NAME].downcase.match(release_pattern)
-      if matches
-        osr[:ID] = "#{matches[:prefix]}#{matches[:version]}#{matches[:release]}"
+      if osr[:PRETTY_NAME].downcase.match(release_pattern)
+        osr[:ID] = "#{$~[:prefix]}#{$~[:version]}#{$~[:release]}"
       end
       osr[:VERSION_ID] = osr[:ID]
-      identifier = vm_id(vm)
-      @@os_release_info[identifier] = osr
-      return @@os_release_info[identifier]
+      @@os_release_info[vm_id(vm)] = osr
+      return osr
     end
 
     def os_release

@@ -7,7 +7,7 @@ rvm:
 
 branches:
   only:
-    - master 
+    - master
 
 # Install dependencies.
 install: bundle install
