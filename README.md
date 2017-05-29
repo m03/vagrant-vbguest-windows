@@ -19,15 +19,22 @@ vagrant plugin install 'vagrant-vbguest-windows'
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at [vagrant-vbguest-windows].
-This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant] code of conduct.
+
+1. [Fork] the repo.
+2. Create your feature branch (`git checkout -b my-new-feature`).
+3. Implement your changes.
+4. Commit your changes (`git commit -am 'Add my feature'`).
+5. Push to your branch (`git push origin my-new-feature`).
+6. Create a new [Pull Request] with a description of your changes.
 
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License].
 
-[Contributor Covenant]: <http://contributor-covenant.org/>
 [MIT License]: <http://opensource.org/licenses/MIT>
 [Vagrant]: <https://github.com/mitchellh/vagrant>
 [vagrant-vbguest]: <https://github.com/dotless-de/vagrant-vbguest>
 [vagrant-vbguest-windows]: <https://github.com/m03/vagrant-vbguest-windows>
+[Fork]: <https://help.github.com/articles/fork-a-repo/>
+[Pull Request]: <https://help.github.com/articles/creating-a-pull-request/>
