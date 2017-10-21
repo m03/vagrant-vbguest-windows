@@ -21,7 +21,8 @@ module VagrantVbguestWindows
     # the way it does in the Linux installer.
     # The result is cached on a per-vm basis.
     #
-    # @return [Hash|nil] The os-release configuration as Hash, or `nil if file is not present or not parsable.
+    # @return [Hash|nil] The os-release configuration as Hash,
+    #   or `nil if file is not present or not parsable.
     def self.os_release(vm)
       @@os_release_info ||= Hash.new
       osr = {
@@ -30,7 +31,8 @@ module VagrantVbguestWindows
       }
       release_pattern = Regexp::new('(?<prefix>win).*?(?<version>\d+)\s+(?<release>r\d+)?')
       cmd = <<-SHELL
-      $Caption = Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object -ExpandProperty Caption
+      $Caption = Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object `
+      -ExpandProperty Caption
       Return $Caption
       SHELL
       begin
@@ -56,8 +58,10 @@ module VagrantVbguestWindows
     # Determine the temporary directory where the ISO file
     # will be uploaded to. Defaults to `$($Env:Temp)`.
     #
-    # @param opts [Hash] Optional options Hash which might get passed to {Vagrant::Communication::WinRM#execute} and friends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash which might get passed to
+    #   {Vagrant::Communication::WinRM#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def tmp_dir
@@ -102,8 +106,10 @@ module VagrantVbguestWindows
 
     # Go through the installation process.
     #
-    # @param opts [Hash] Optional options Hash which might get passed to {Vagrant::Communication::WinRM#execute} and friends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash which might get passed to
+    #   {Vagrant::Communication::WinRM#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def install(opts=nil, &block)
@@ -114,8 +120,10 @@ module VagrantVbguestWindows
       unmount_iso(opts, &block) unless options[:no_cleanup]
     end
 
-    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash wich meight get passed to
+    #   {Vagrant::Communication::SSH#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given outputervice
     def rebuild(opts=nil, &block)
@@ -126,8 +134,10 @@ module VagrantVbguestWindows
     # that have native PowerShell 4 or newer.
     # Mounts the given uploaded file from +tmp_path+ on +mount_point+.
     #
-    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash wich meight get passed to
+    #   {Vagrant::Communication::SSH#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def mount_iso(opts=nil, &block)
@@ -147,8 +157,10 @@ module VagrantVbguestWindows
     # that have native PowerShell 4 or newer.
     # Unmounts the +tmp_path+.
     #
-    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash wich meight get passed to
+    #   {Vagrant::Communication::SSH#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def unmount_iso(opts=nil, &block)
@@ -162,7 +174,7 @@ module VagrantVbguestWindows
     # for it's version.
     # In some scenarios the results of the VirtualBox driver and the
     # additions installed on the host may differ. If this happens, we
-    # assume, that the host binaries are right and yield a warning message.
+    # assume that the host binaries are right and yield a warning message.
     #
     # @return [String] The version code of the VirtualBox Guest Additions
     #                  available on the guest, or `nil` if none installed.
@@ -174,7 +186,8 @@ module VagrantVbguestWindows
         service_version = data.to_s[VERSION_PATTERN, 1]
         if service_version
           if driver_version != service_version
-            @env.ui.warn(I18n.t("vagrant_vbguest.guest_version_reports_differ", :driver => driver_version, :service => service_version))
+            @env.ui.warn(I18n.t("vagrant_vbguest.guest_version_reports_differ",
+                                :driver => driver_version, :service => service_version))
           end
           @guest_version = service_version
         end
@@ -182,8 +195,10 @@ module VagrantVbguestWindows
       @guest_version
     end
 
-    # @param opts [Hash] Optional options Hash wich meight get passed to {Vagrant::Communication::SSH#execute} and firends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash wich meight get passed to
+    #   {Vagrant::Communication::SSH#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def start(opts=nil, &block)
@@ -195,8 +210,10 @@ module VagrantVbguestWindows
       communicate.sudo(cmd, opts, &block)
     end
 
-    # @param opts [Hash] Optional options Hash which might get passed to {Vagrant::Communication::WinRM#execute} and friends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash which might get passed to
+    #   {Vagrant::Communication::WinRM#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def running?(opts=nil, &block)
@@ -211,8 +228,10 @@ module VagrantVbguestWindows
     # Helper to ensure that the certificates are in place
     # so that the installer doesn't prompt for user input.
     #
-    # @param opts [Hash] Optional options Hash which might get passed to {Vagrant::Communication::SSH#execute} and friends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash which might get passed to
+    #   {Vagrant::Communication::SSH#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def execute_certutil(opts=nil, &block)
@@ -220,7 +239,8 @@ module VagrantVbguestWindows
       $CertDir = Join-Path -Path '#{mount_point}' -ChildPath 'cert'
       $UtilPath = Join-Path -Path $CertDir -ChildPath 'VBoxCertUtil.exe'
       $Certificates = @(Get-ChildItem -Path $CertDir -Filter *.cer | Foreach-Object { $_.FullName })
-      $Certificates | ForEach-Object { Start-Process -FilePath $UtilPath -ArgumentList "add-trusted-publisher $($_) --root $($_)" -Wait }
+      $Certificates | ForEach-Object { Start-Process -FilePath $UtilPath `
+      -ArgumentList "add-trusted-publisher $($_) --root $($_)" -Wait }
       SHELL
       opts = {:error_check => false}.merge(opts || {})
       communicate.sudo(cmd, opts, &block)
@@ -230,14 +250,17 @@ module VagrantVbguestWindows
     # This also yields a installation warning to the user, and an error
     # warning in the event that the installer returns a non-zero exit status.
     #
-    # @param opts [Hash] Optional options Hash which might get passed to {Vagrant::Communication::SSH#execute} and friends
-    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute} for realtime output of the command being executed
+    # @param opts [Hash] Optional options Hash which might get passed to
+    #   {Vagrant::Communication::SSH#execute} and friends
+    # @yield [type, data] Takes a Block like {Vagrant::Communication::Base#execute}
+    #   for realtime output of the command being executed
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def execute_installer(opts=nil, &block)
       yield_installation_warning(installer)
       cmd = <<-SHELL
-      $ExitCode = (Start-Process -FilePath '#{installer}' -ArgumentList '#{windows_installer_arguments}' -Wait -PassThru).ExitCode
+      $ExitCode = (Start-Process -FilePath '#{installer}' `
+      -ArgumentList '#{windows_installer_arguments}' -Wait -PassThru).ExitCode
       Start-Sleep -Seconds 60
       Return $ExitCode
       SHELL
@@ -252,11 +275,13 @@ module VagrantVbguestWindows
     #
     # @return [String] The version code of the GuestAdditions installer
     def installer_version(path_to_installer)
-      version = nil
+      # Ignore what was passed in from {VagrantVbguest::Installers::Base}
+      # and use the value of installer instead.
       cmd = <<-SHELL
-      $Installer = Get-ItemProperty -Path "#{installer}"
+      $Installer = Get-ItemProperty -Path "#{installer || path_to_installer}"
       $Installer.VersionInfo | Select-Object -ExpandProperty FileVersion
       SHELL
+      version = nil
       communicate.sudo(cmd, :error_check => false) do |type, data|
         version = data.to_s[VERSION_PATTERN, 1]
       end

@@ -12,9 +12,11 @@ require_relative 'vagrant-vbguest-windows/version'
 require_relative 'vagrant-vbguest-windows/installers/windows'
 
 module VagrantVbguestWindows
+  # Set up the Vagrant Plugin Definition.
   class Plugin < Vagrant.plugin('2')
 
     name 'vagrant-vbguest-windows'
-    description 'This Vagrant plugin extends vagrant-vbguest, by adding a VagrantVbguest Installer for Windows clients.'
+    description 'This Vagrant plugin extends vagrant-vbguest, by'\
+                ' adding a VagrantVbguest Installer for Windows clients.'
   end
 end

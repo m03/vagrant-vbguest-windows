@@ -12,5 +12,4 @@ branches:
 # Install dependencies.
 install: bundle install
 script:
-  - bundle exec rake
-  - gem build vagrant-vbguest-windows.gemspec
+  - make
