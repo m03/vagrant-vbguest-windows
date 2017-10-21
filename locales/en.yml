@@ -1,7 +1,5 @@
 en:
   vagrant_vbguest_windows:
-    mounting_iso: "Mounting Virtualbox Guest Additions ISO to: %{mount_point}"
-    unmounting_iso: "Unmounting Virtualbox Guest Additions ISO from: %{mount_point}"
     errors:
       installer:
         generic_installer: |-
