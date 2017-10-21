@@ -12,4 +12,5 @@ branches:
 # Install dependencies.
 install: bundle install
 script:
-  - make
+  - make test
+  - make build
