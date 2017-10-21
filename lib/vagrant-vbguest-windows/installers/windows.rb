@@ -140,7 +140,7 @@ module VagrantVbguestWindows
         block
         @mount_point = data.strip unless data.empty?
       end
-      env.ui.info(I18n.t("vagrant_vbguest_windows.mounting_iso", :mount_point => mount_point))
+      env.ui.info(I18n.t("vagrant_vbguest.mounting_iso", :mount_point => mount_point))
     end
 
     # Un-mounting the GuestAdditions iso file on Windows systems
@@ -152,7 +152,7 @@ module VagrantVbguestWindows
     # @yieldparam [String] type Type of the output, `:stdout`, `:stderr`, etc.
     # @yieldparam [String] data Data for the given output.
     def unmount_iso(opts=nil, &block)
-      env.ui.info(I18n.t("vagrant_vbguest_windows.unmounting_iso", :mount_point => mount_point))
+      env.ui.info(I18n.t("vagrant_vbguest.unmounting_iso", :mount_point => mount_point))
       opts = {:error_check => false}.merge(opts || {})
       communicate.sudo("Dismount-DiskImage -ImagePath \"#{tmp_path}\"", opts, &block)
     end
